@@ -7,24 +7,24 @@ module.exports = function getAuthenticator({
 }) {
   const authClient = new GoogleAuth.OAuth2(clientId)
 
-  return function *authenticate(next) {
-    const token = tokenRetriever(this.request)
+  return async function authenticate(ctx, next) {
+    const token = tokenRetriever(ctx.request)
 
-    this.assert(token, 401, 'authorization token not found')
+    ctx.assert(token, 401, 'authorization token not found')
 
     if (test != undefined && test.token === token) {
-      this.state.user = test.user
-      yield* next
+      ctx.state.user = test.user
+      await next()
       return
     }
 
     try {
-      this.state.user = yield verifyToken(authClient, token)
+      ctx.state.user = await verifyToken(authClient, token)
     } catch(e) {
-      this.throw(401, e)
+      ctx.throw(401, e)
     }
 
-    yield* next
+    await next()
   }
 }
 

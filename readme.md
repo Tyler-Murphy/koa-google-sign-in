@@ -11,10 +11,10 @@ npm install --save koa-google-sign-in
 Tokens are verified using your Google sign in client ID. The resulting Google user object is attached to `ctx.state.user`.
 
 ```node
-const koa = require('koa')
+const Koa = require('koa')
 const googleSignInAuth = require('koa-google-sign-in')
 
-const app = koa()
+const app = new Koa()
 app.use(googleSignInAuth({
   clientId: process.env.GOOGLE_SIGN_IN_CLIENT_ID,
   tokenRetriever: request => request.query.token,
@@ -26,8 +26,8 @@ app.use(googleSignInAuth({
   }
 }))
 
-app.use(function* respond() {
-  this.body = `Signed in as ${this.state.user.email}`
+app.use(function respond(ctx) {
+  ctx.body = `Signed in as ${ctx.state.user.email}`
 })
 
 app.listen(process.env.PORT)

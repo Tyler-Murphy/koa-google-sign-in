@@ -1,5 +1,5 @@
 const test = require('tape')
-const koa = require('koa')
+const Koa = require('koa')
 const mount = require('koa-mount')
 const open = require('opn')
 const http = require('http')
@@ -83,11 +83,11 @@ test('invalid token', t => {
 })
 
 test('valid token', t => {
-  const app = koa()
+  const app = new Koa()
   const testPagePath = '/testPage'
 
-  app.use(mount(testPagePath, function* servePage() {
-    this.body = `
+  app.use(mount(testPagePath, ctx => {
+    ctx.body = `
     <html lang="en">
       <head>
         <meta name="google-signin-scope" content="profile email">
@@ -115,7 +115,7 @@ test('valid token', t => {
     `
   }))
   app.use(googleAuth(baseConfig))
-  app.use(function* () { this.body = 'Success! Quit this browser to continue tests.' })
+  app.use(ctx => { ctx.body = 'Success! Quit this browser to continue tests.' })
 
   const server = http.createServer(app.callback())
 
@@ -128,10 +128,10 @@ test('valid token', t => {
 })
 
 function getTestServer(config) {
-  const app = koa()
+  const app = new Koa()
 
   app.use(googleAuth(config))
-  app.use(function* () { this.body = this.state.user })
+  app.use(ctx => { ctx.body = ctx.state.user })
 
   return http.createServer(app.callback())
 }
