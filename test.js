@@ -82,7 +82,7 @@ test('invalid token', t => {
   .finally(t.end)
 })
 
-test('valid token', t => {
+test('valid token', async t => {
   const app = new Koa()
   const testPagePath = '/testPage'
 
@@ -115,16 +115,24 @@ test('valid token', t => {
     `
   }))
   app.use(googleAuth(baseConfig))
-  app.use(ctx => { ctx.body = 'Success! Quit this browser to continue tests.' })
+
+  const pendingSuccess = new Promise(resolve => {
+    app.use(ctx => {
+      ctx.body = 'Success! You may close this window/tab.'
+      resolve()
+    })
+  })
 
   const server = http.createServer(app.callback())
 
-  startTestServer(server)
-  .then(() => open(baseRequest.uri + testPagePath, {
-    app: ['google chrome', '--incognito']
-  }))
-  .finally(() => stopTestServer(server))
-  .finally(t.end)
+  await startTestServer(server)
+  await open(baseRequest.uri + testPagePath, {
+    wait: false
+  })
+  await pendingSuccess
+  await stopTestServer(server)
+
+  t.end()
 })
 
 function getTestServer(config) {

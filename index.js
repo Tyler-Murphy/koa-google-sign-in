@@ -1,11 +1,11 @@
-const GoogleAuth = new (require('google-auth-library'))()
+const googleAuthLibrary = require('google-auth-library')
 
 module.exports = function getAuthenticator({
   clientId,
   tokenRetriever = getToken,
   test = {},
 }) {
-  const authClient = new GoogleAuth.OAuth2(clientId)
+  const authClient = new googleAuthLibrary.OAuth2Client(clientId)
 
   return async function authenticate(ctx, next) {
     const token = tokenRetriever(ctx.request)
@@ -32,9 +32,9 @@ function getToken(request) {
   return request.headers.authorization
 }
 
-function verifyToken(authClient, token) {
+function verifyToken(authClient, idToken) {
   return new Promise((resolve, reject) => {
-    authClient.verifyIdToken(token, null, (error, result) => {
+    authClient.verifyIdToken({ idToken }, (error, result) => {
       if (error) {
         reject(error)
       } else {

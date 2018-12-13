@@ -34,13 +34,14 @@
   },
   "homepage": "https://github.com/Tyler-Murphy/koa-google-sign-in#readme",
   "dependencies": {
-    "google-auth-library": "^0.10.0"
+    "google-auth-library": "^2.0.1"
   },
   "devDependencies": {
     "bluebird": "^3.4.7",
-    "koa": "^2.3.0",
+    "koa": "^2.6.2",
     "koa-mount": "^3.0.0",
     "opn": "^4.0.2",
+    "request": "^2.88.0",
     "request-promise": "^4.1.1",
     "tape": "^4.6.3"
   }
