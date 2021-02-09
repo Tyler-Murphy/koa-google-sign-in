@@ -34,7 +34,7 @@
   },
   "homepage": "https://github.com/Tyler-Murphy/koa-google-sign-in#readme",
   "dependencies": {
-    "google-auth-library": "^2.0.1"
+    "google-auth-library": "^7.0.0"
   },
   "devDependencies": {
     "bluebird": "^3.4.7",
