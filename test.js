@@ -1,11 +1,10 @@
-const test = require('tape')
-const Koa = require('koa')
-const mount = require('koa-mount')
-const open = require('opn')
-const http = require('http')
-const googleAuth = require('./index.js')
-const request = require('request-promise')
-const Promise = require('bluebird')
+import Koa from 'koa'
+import mount from 'koa-mount'
+import open from 'open'
+import http from 'http'
+import googleAuth from './index.js'
+import test from 'node:test'
+import { strict as assert } from 'assert'
 
 const testClientId = '984514058637-n4064avq1u977cn1cpjrk0p0baiohq9e.apps.googleusercontent.com'
 const serverPort = 3456
@@ -18,68 +17,69 @@ const baseConfig = {
     user: testUser,
   },
 }
-const baseRequest = {
-  uri: `http://localhost:${serverPort}`,
-  headers: {
-    Authorization: testToken,
-  },
-  resolveWithFullResponse: true,
-  simple: false,  // reject promise only for technical reasons
-  json: true,
-}
-
-test('test token and user', t => {
-  const server = getTestServer(baseConfig)
-
-  startTestServer(server)
-  .then(() => Promise.join(
-    request(baseRequest),
-    request(Object.assign({}, baseRequest, { headers: {} }))
-  ))
-  .spread((successful, failure) => {
-    t.equal(successful.statusCode, 200)
-    t.deepLooseEqual(successful.body, testUser)
-
-    t.equal(failure.statusCode, 401)
-  })
-  .finally(() => stopTestServer(server))
-  .finally(t.end)
+const baseUrl = `http://localhost:${serverPort}`
+const authenticationHeaders = new Headers({
+  Authorization: testToken,
 })
 
-test('custom token retriever', t => {
+test('test token and user', async () => {
+  const server = getTestServer(baseConfig)
+
+  await startTestServer(server)
+
+  const [
+    resultWithAuthentication,
+    resultWithoutAuthentication
+  ] = await Promise.all([
+    fetch(baseUrl, {
+      headers: authenticationHeaders
+    }),
+    fetch(baseUrl)
+  ])
+
+  assert.equal(resultWithAuthentication.status, 200)
+  assert.deepStrictEqual(await resultWithAuthentication.json(), testUser)
+  assert.equal(resultWithoutAuthentication.status, 401)
+
+  await stopTestServer(server)
+})
+
+test('custom token retriever', async () => {
   const server = getTestServer(Object.assign({}, baseConfig, {
     tokenRetriever: request => request.query.token,
   }))
 
-  startTestServer(server)
-  .then(() => Promise.join(
-    request(Object.assign({}, baseRequest, {
-      qs: {
-        token: testToken,
-      },
-    })),
-    request(baseRequest)
-  ))
-  .spread((successful, failure) => {
-    t.equal(successful.statusCode, 200)
-    t.deepLooseEqual(successful.body, testUser)
+  await startTestServer(server)
 
-    t.equal(failure.statusCode, 401)
-  })
-  .finally(() => stopTestServer(server))
-  .finally(t.end)
+  const [
+    resultWithAuthentication,
+    resultWithoutAuthentication
+  ] = await Promise.all([
+    fetch(`${baseUrl}?token=${testToken}`),
+    fetch(baseUrl)
+  ])
+
+  assert.equal(resultWithAuthentication.status, 200)
+  assert.deepStrictEqual(await resultWithAuthentication.json(), testUser)
+  assert.equal(resultWithoutAuthentication.status, 401)
+
+  await stopTestServer(server)
 })
 
-test('invalid token', t => {
+test('invalid token', async () => {
   const server = getTestServer(Object.assign({}, baseConfig, {
     test: null,
   }))
 
-  startTestServer(server)
-  .then(() => request(baseRequest))
-  .then(({ statusCode }) => t.equal(statusCode, 401))
-  .finally(() => stopTestServer(server))
-  .finally(t.end)
+  await startTestServer(server)
+
+  const { status } = await fetch(baseUrl, {
+    headers: authenticationHeaders
+  })
+
+  assert.equal(status, 401)
+
+  await stopTestServer(server)
 })
 
 test('valid token', async t => {
@@ -100,7 +100,7 @@ test('valid token', async t => {
           function onSignIn(googleUser) {
             const idToken = googleUser.getAuthResponse().id_token
 
-            fetch('${baseRequest.uri}', {
+            fetch('${baseUrl}', {
               headers: {
                 Authorization: idToken
               },
@@ -116,23 +116,21 @@ test('valid token', async t => {
   }))
   app.use(googleAuth(baseConfig))
 
-  const pendingSuccess = new Promise(resolve => {
+  const pendingSuccess = /** @type {Promise<void>} */(new Promise(resolve => {
     app.use(ctx => {
       ctx.body = 'Success! You may close this window/tab.'
       resolve()
     })
-  })
+  }))
 
   const server = http.createServer(app.callback())
 
   await startTestServer(server)
-  await open(baseRequest.uri + testPagePath, {
+  await open(baseUrl + testPagePath, {
     wait: false
   })
   await pendingSuccess
   await stopTestServer(server)
-
-  t.end()
 })
 
 function getTestServer(config) {

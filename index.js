@@ -1,11 +1,13 @@
-const googleAuthLibrary = require('google-auth-library')
+import { OAuth2Client } from 'google-auth-library'
 
-module.exports = function getAuthenticator({
+export default getAuthenticator
+
+function getAuthenticator({
   clientId,
   tokenRetriever = getToken,
   test = {},
 }) {
-  const authClient = new googleAuthLibrary.OAuth2Client(clientId)
+  const authClient = new OAuth2Client(clientId)
 
   return async function authenticate(ctx, next) {
     const token = tokenRetriever(ctx.request)

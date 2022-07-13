@@ -3,8 +3,9 @@
   "version": "2.0.3",
   "description": "Use google sign-in for websites with Koa.",
   "main": "index.js",
+  "type": "module",
   "engines": {
-    "node": ">=7.6"
+    "node": ">=18.5"
   },
   "scripts": {
     "test": "node test.js"
@@ -34,15 +35,11 @@
   },
   "homepage": "https://github.com/Tyler-Murphy/koa-google-sign-in#readme",
   "dependencies": {
-    "google-auth-library": "^7.0.0"
+    "google-auth-library": "^8.1.0"
   },
   "devDependencies": {
-    "bluebird": "^3.4.7",
-    "koa": "^2.6.2",
-    "koa-mount": "^3.0.0",
-    "opn": "^4.0.2",
-    "request": "^2.88.0",
-    "request-promise": "^4.1.1",
-    "tape": "^4.6.3"
+    "koa": "^2.13.4",
+    "koa-mount": "^4.0.0",
+    "open": "^8.4.0"
   }
 }
